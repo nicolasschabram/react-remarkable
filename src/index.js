@@ -1,54 +1,29 @@
-'use strict';
+"use strict";
 
-import React from 'react';
-import Markdown from 'remarkable';
+import React, { useMemo } from "react";
+import Markdown from "remarkable";
 
-class Remarkable extends React.Component {
+export default function Remarkable({
+  options = {},
+  source,
+  container: Container = "div",
+  children,
+}) {
+  const md = useMemo(() => new Markdown(options), [options]);
 
-  render() {
-    var Container = this.props.container;
-
-    return (
-      <Container>
-        {this.content()}
-      </Container>
-    );
-  }
-
-  componentWillUpdate(nextProps, nextState) {
-    if (nextProps.options !== this.props.options) {
-      this.md = new Markdown(nextProps.options);
+  const content = useMemo(() => {
+    if (source) {
+      return <span dangerouslySetInnerHTML={{ __html: md.render(source) }} />;
+    } else {
+      return React.Children.map(children, (child) =>
+        typeof child === "string" ? (
+          <span dangerouslySetInnerHTML={{ __html: md.render(child) }} />
+        ) : (
+          child
+        )
+      );
     }
-  }
+  }, [source, children, md]);
 
-  content() {
-    if (this.props.source) {
-      return <span dangerouslySetInnerHTML={{ __html: this.renderMarkdown(this.props.source) }} />;
-    }
-    else {
-      return React.Children.map(this.props.children, child => {
-        if (typeof child === 'string') {
-          return <span dangerouslySetInnerHTML={{ __html: this.renderMarkdown(child) }} />;
-        }
-        else {
-          return child;
-        }
-      });
-    }
-  }
-
-  renderMarkdown(source) {
-    if (!this.md) {
-      this.md = new Markdown(this.props.options);
-    }
-
-    return this.md.render(source);
-  }
+  return <Container>{content}</Container>;
 }
-
-Remarkable.defaultProps = {
-  container: 'div',
-  options: {},
-};
-
-export default Remarkable;
